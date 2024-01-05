@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./keycloak/db-init.sql:/docker-entrypoint-initdb.d/db-init.sql
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    restart: always
+    depends_on:
+      - 'db'
+    command:
+      - 'start-dev'
+      - '--db=postgres'
+      - '--db-url=jdbc:postgresql://db:5432/keycloak'
+      - '--db-username=postgres'
+      - '--db-password=postgres'
+      - '--import-realm'
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    ports:
+      - '9000:8080'
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import
+
+  pgadmin:
+    image: dpage/pgadmin4:7.3
+    restart: always
+    depends_on:
+      - 'db'
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@local.net
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - 9001:80
+
+volumes:
+  pgdata:
+    driver: local
