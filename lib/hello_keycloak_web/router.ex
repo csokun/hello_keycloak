@@ -1,6 +1,13 @@
 defmodule HelloKeycloakWeb.Router do
   use HelloKeycloakWeb, :router
 
+  import HelloKeycloakWeb.UserAuth,
+    only: [
+      redirect_if_user_is_authenticated: 2,
+      require_authenticated_user: 2,
+      fetch_current_user: 2
+    ]
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -15,7 +22,7 @@ defmodule HelloKeycloakWeb.Router do
   end
 
   scope "/auth", HelloKeycloakWeb do
-    pipe_through :browser
+    pipe_through [:browser, :redirect_if_user_is_authenticated]
 
     get "/:provider", AuthController, :request
     get "/:provider/callback", AuthController, :callback
@@ -24,7 +31,7 @@ defmodule HelloKeycloakWeb.Router do
   end
 
   scope "/", HelloKeycloakWeb do
-    pipe_through :browser
+    pipe_through [:browser, :fetch_current_user, :require_authenticated_user]
 
     get "/", PageController, :home
   end

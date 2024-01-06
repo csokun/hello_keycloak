@@ -7,7 +7,6 @@ defmodule HelloKeycloakWeb.AuthController do
   plug Ueberauth
 
   alias Ueberauth.Strategy.Keycloak
-  alias HelloKeycloak.UserFromAuth
 
   def request(conn, _params) do
     redirect(conn, external: Keycloak.OAuth.authorize_url!())
@@ -27,18 +26,10 @@ defmodule HelloKeycloakWeb.AuthController do
   end
 
   def callback(%{assigns: %{ueberauth_auth: auth}} = conn, _params) do
-    case UserFromAuth.find_or_create(auth) do
-      {:ok, user} ->
-        conn
-        |> put_flash(:info, "Successfully authenticated.")
-        |> put_session(:current_user, user)
-        |> configure_session(renew: true)
-        |> redirect(to: "/")
+    user = Map.merge(auth.info, %{user_id: auth.info.name})
 
-      {:error, reason} ->
-        conn
-        |> put_flash(:error, reason)
-        |> redirect(to: "/")
-    end
+    conn
+    |> put_flash(:info, "Successfully authenticated.")
+    |> HelloKeycloakWeb.UserAuth.log_in_user(user)
   end
 end
