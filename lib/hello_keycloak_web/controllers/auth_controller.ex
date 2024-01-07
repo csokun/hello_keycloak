@@ -14,22 +14,50 @@ defmodule HelloKeycloakWeb.AuthController do
 
   def delete(conn, _params) do
     conn
-    |> put_flash(:info, "You have been logged out!")
+    |> notify_keyclock_of_logout()
     |> clear_session()
+    |> assign(:current_user, nil)
+    |> put_flash(:info, "You have been logged out!")
     |> redirect(to: "/")
   end
 
   def callback(%{assigns: %{ueberauth_failure: _fails}} = conn, _params) do
+    # redirect to http://localhost:9000/realms/local/protocol/openid-connect/logout
     conn
     |> put_flash(:error, "Failed to authenticate.")
-    |> redirect(to: "/")
+    |> redirect(to: ~p"/auth/unauthorized")
   end
 
   def callback(%{assigns: %{ueberauth_auth: auth}} = conn, _params) do
+    # extract & store tokens
+    # don't do this in production
+    token = auth.credentials.token
+    refresh_token = auth.credentials.refresh_token
     user = Map.merge(auth.info, %{user_id: auth.info.name})
 
     conn
     |> put_flash(:info, "Successfully authenticated.")
-    |> HelloKeycloakWeb.UserAuth.log_in_user(user)
+    |> HelloKeycloakWeb.UserAuth.log_in_user(user, token, refresh_token)
+  end
+
+  def unauthorized(conn, _params) do
+    render(conn, "unauthorized.html")
+  end
+
+  defp notify_keyclock_of_logout(conn) do
+    token = get_session(conn, :token)
+    refresh_token = get_session(conn, :refresh_token)
+
+    logout_url = "http://localhost:9000/realms/local/protocol/openid-connect/logout"
+    body = "client_id=phoenix&refresh_token=#{refresh_token}"
+
+    headers = [
+      {"Authorization", "Bearer #{token}"},
+      {"Content-Type", "application/x-www-form-urlencoded"}
+    ]
+
+    Req.post!(logout_url, body: body, headers: headers)
+
+    conn
   end
 end

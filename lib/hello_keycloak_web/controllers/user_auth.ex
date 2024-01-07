@@ -49,12 +49,14 @@ defmodule HelloKeycloakWeb.UserAuth do
   disconnected on log out. The line can be safely removed
   if you are not using LiveView.
   """
-  def log_in_user(conn, user) do
+  def log_in_user(conn, user, token, refresh_token) do
     user_return_to = get_session(conn, :user_return_to)
     conn = assign(conn, :current_user, user)
 
     conn
     |> renew_session()
+    |> put_session(:token, token)
+    |> put_session(:refresh_token, refresh_token)
     |> put_session(:user_id, user.user_id)
     |> put_session(:live_socket_id, "users_sessions:#{user.user_id}")
     |> redirect(to: user_return_to || ~p"/")
@@ -120,7 +122,6 @@ defmodule HelloKeycloakWeb.UserAuth do
       conn
     else
       conn
-      |> put_flash(:error, "You must log in to access this page.")
       |> maybe_store_return_to()
       |> redirect(to: ~p"/auth/keycloak")
       |> halt()

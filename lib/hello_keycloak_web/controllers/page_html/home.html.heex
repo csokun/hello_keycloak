@@ -53,8 +53,13 @@
       </small>
     </h1>
 
-    <div class="flex">
-      Username: <%= @current_user["user_id"] || "" %>
+    <div class="flex flex-col gap-2">
+      <p>Username: <%= @current_user["user_id"] || "" %></p>
+      <form action={~p"/auth/logout"} method="post">
+        <input name="_method" type="hidden" value="delete" />
+        <input name="_csrf_token" type="hidden" value={get_csrf_token()} />
+        <.button type="submit">Logout</.button>
+      </form>
     </div>
   </div>
 </div>

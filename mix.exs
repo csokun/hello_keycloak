@@ -44,6 +44,7 @@ defmodule HelloKeycloak.MixProject do
       {:ueberauth_keycloak_strategy, "~> 0.4.0"},
       {:swoosh, "~> 1.3"},
       {:finch, "~> 0.13"},
+      {:req, "~> 0.4.8"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},
