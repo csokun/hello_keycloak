@@ -15,14 +15,12 @@ defmodule HelloKeycloakWeb.AuthController do
   def delete(conn, _params) do
     conn
     |> notify_keyclock_of_logout()
-    |> clear_session()
-    |> assign(:current_user, nil)
+    |> HelloKeycloakWeb.UserAuth.log_out_user()
     |> put_flash(:info, "You have been logged out!")
     |> redirect(to: "/")
   end
 
   def callback(%{assigns: %{ueberauth_failure: _fails}} = conn, _params) do
-    # redirect to http://localhost:9000/realms/local/protocol/openid-connect/logout
     conn
     |> put_flash(:error, "Failed to authenticate.")
     |> redirect(to: ~p"/auth/unauthorized")

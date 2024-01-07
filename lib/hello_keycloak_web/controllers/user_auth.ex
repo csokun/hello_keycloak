@@ -80,8 +80,9 @@ defmodule HelloKeycloakWeb.UserAuth do
     end
 
     conn
+    |> assign(:current_user, nil)
     |> renew_session()
-    |> redirect(to: ~p"/auth/keycloak")
+    |> redirect(to: ~p"/")
   end
 
   @doc """
