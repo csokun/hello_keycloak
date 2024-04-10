@@ -21,6 +21,8 @@ defmodule HelloKeycloakWeb.UserAuth do
   end
 
   def on_mount(:ensure_authenticated, _params, session, socket) do
+    session |> dbg()
+
     case session do
       %{"user_id" => user_id} ->
         new_socket =

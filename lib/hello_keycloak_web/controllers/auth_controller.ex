@@ -6,6 +6,8 @@ defmodule HelloKeycloakWeb.AuthController do
 
   plug Ueberauth
 
+  require Logger
+
   alias Ueberauth.Strategy.Keycloak
 
   def request(conn, _params) do
@@ -13,11 +15,12 @@ defmodule HelloKeycloakWeb.AuthController do
   end
 
   def delete(conn, _params) do
+    Logger.info("Logging out user")
+
     conn
     |> notify_keyclock_of_logout()
     |> HelloKeycloakWeb.UserAuth.log_out_user()
     |> put_flash(:info, "You have been logged out!")
-    |> redirect(to: "/")
   end
 
   def callback(%{assigns: %{ueberauth_failure: _fails}} = conn, _params) do
@@ -45,9 +48,15 @@ defmodule HelloKeycloakWeb.AuthController do
   defp notify_keyclock_of_logout(conn) do
     token = get_session(conn, :token)
     refresh_token = get_session(conn, :refresh_token)
+    client_id = Application.get_env(:ueberauth, Ueberauth.Strategy.Keycloak.OAuth)[:client_id]
+
+    client_secret =
+      Application.get_env(:ueberauth, Ueberauth.Strategy.Keycloak.OAuth)[:client_secret]
 
     logout_url = "http://localhost:9000/realms/local/protocol/openid-connect/logout"
-    body = "client_id=phoenix&refresh_token=#{refresh_token}"
+
+    body =
+      "client_id=#{client_id}&client_secret=#{client_secret}&refresh_token=#{refresh_token}"
 
     headers = [
       {"Authorization", "Bearer #{token}"},
